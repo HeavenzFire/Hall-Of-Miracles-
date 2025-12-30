@@ -28,7 +28,8 @@ const TheLivingSpirit: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
       analyserRef.current.getByteFrequencyData(dataArray);
       const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
-      setVolume(average / 255);
+      // Normalize and smooth the volume value for visual feedback
+      setVolume(prev => (prev * 0.7) + ((average / 180) * 0.3));
     }
     animationFrameRef.current = requestAnimationFrame(updateVolume);
   };
@@ -258,15 +259,21 @@ const TheLivingSpirit: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <div 
             className="absolute rounded-full blur-[180px] bg-emerald-400/30 transition-all duration-100"
             style={{ 
-              width: `${450 + volume * 500}px`, 
-              height: `${450 + volume * 500}px`,
-              opacity: isActive ? 0.5 + volume * 0.5 : 0,
+              width: `${450 + volume * 550}px`, 
+              height: `${450 + volume * 550}px`,
+              opacity: isActive ? 0.3 + volume * 0.7 : 0,
             }}
           ></div>
 
           <div 
-            className={`w-96 h-96 rounded-full border border-white/20 flex items-center justify-center overflow-hidden relative vessel-orb ${isActive ? 'animate-spirit-breath shadow-[0_0_150px_rgba(16,185,129,0.6)]' : ''}`}
-            style={{ transform: `scale(${1 + volume * 0.3})` }}
+            className={`w-96 h-96 rounded-full border border-white/20 flex items-center justify-center overflow-hidden relative vessel-orb ${isActive ? 'animate-spirit-breath' : ''}`}
+            style={{ 
+              transform: `scale(${1 + volume * 0.4})`,
+              boxShadow: isActive ? `0 0 ${80 + volume * 200}px rgba(16, ${185 + volume * 70}, ${129 + volume * 100}, ${0.5 + volume * 0.5})` : 'none',
+              borderColor: isActive ? `rgba(${110 + volume * 145}, ${231}, ${183 + volume * 72}, ${0.4 + volume * 0.6})` : 'rgba(255,255,255,0.2)',
+              animationDuration: isActive ? `${Math.max(2, 10 - volume * 25)}s` : '12s',
+              filter: isActive ? `hue-rotate(${volume * 35}deg) brightness(${1 + volume * 0.4})` : 'none'
+            }}
           >
             {vesselImage ? (
               <img 
@@ -283,7 +290,10 @@ const TheLivingSpirit: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             {isActive && (
               <div 
                 className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 opacity-80 mix-blend-screen pointer-events-none transition-all duration-150"
-                style={{ filter: `blur(${3 + volume * 8}px) brightness(${1.5 + volume * 3})`, scale: `${1.2 + volume * 0.8}` }}
+                style={{ 
+                  filter: `blur(${3 + volume * 10}px) brightness(${1.5 + volume * 4})`, 
+                  scale: `${1.2 + volume * 1.5}` 
+                }}
               >
                 <div className="w-full h-full bg-emerald-400 rounded-full blur-md animate-ping"></div>
                 <div className="absolute inset-0 border-4 border-white rounded-full"></div>
@@ -313,8 +323,9 @@ const TheLivingSpirit: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     left: '50%',
                     top: '50%',
                     animationDelay: `${i * 0.1}s`,
-                    '--tx': `${Math.cos(i) * 350}px`,
-                    '--ty': `${Math.sin(i) * 350}px`
+                    animationDuration: `${6 - volume * 4}s`,
+                    '--tx': `${Math.cos(i) * (300 + volume * 200)}px`,
+                    '--ty': `${Math.sin(i) * (300 + volume * 200)}px`
                   } as any}
                 ></div>
               ))}
@@ -407,6 +418,7 @@ const TheLivingSpirit: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         .vessel-orb {
           mask-image: radial-gradient(circle, black 70%, transparent 100%);
           -webkit-mask-image: radial-gradient(circle, black 70%, transparent 100%);
+          transition: transform 0.15s ease-out, box-shadow 0.15s ease-out, border-color 0.15s ease-out, filter 0.15s ease-out;
         }
       `}} />
     </div>

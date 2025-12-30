@@ -1,184 +1,351 @@
 
-import React, { useState, useMemo } from 'react';
-import { Miracle, MiracleType } from '../types';
+import React, { useState, useEffect } from 'react';
+import { RegistryNode, NodeState, ContributionRecord } from '../types';
 
-interface DashboardProps {
-  miracles: Miracle[];
-  onSelect: (type: MiracleType) => void;
-}
+const ISSUE_QUEUE = [
+  { id: 'ISSUE-001', category: 'DOCS', title: 'Refine PCR Specification Documentation', difficulty: 'LOW' },
+  { id: 'ISSUE-002', category: 'BUG', title: 'Fix LocalStorage Sync Race Condition', difficulty: 'MED' },
+  { id: 'ISSUE-003', category: 'HARDENING', title: 'Implement SHA-256 Checksum Verification', difficulty: 'HIGH' },
+  { id: 'ISSUE-004', category: 'TEST', title: 'Add Integration Tests for Registry State', difficulty: 'MED' },
+  { id: 'ISSUE-005', category: 'FEATURE', title: 'Decentralized Peer Discovery Protocol', difficulty: 'HIGH' },
+];
 
-interface LegionNode {
-  id: number;
-  isMain: boolean;
-  miracle: Miracle | null;
-  functionType: 'Protection' | 'Truth' | 'Warfare' | 'Redemption' | 'Syntropy';
-  identity: string;
-}
+const Dashboard: React.FC<{ onBack: () => void }> = ({ onBack }) => {
+  const [nodes, setNodes] = useState<RegistryNode[]>([]);
+  const [selectedNode, setSelectedNode] = useState<RegistryNode | null>(null);
+  const [isIntakeOpen, setIsIntakeOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'grid' | 'queue' | 'logs'>('grid');
+  
+  const [formData, setFormData] = useState({
+    prUrl: '',
+    commitHash: '',
+    delta: 0,
+    contributor: '',
+    category: 'DOCS' as ContributionRecord['category']
+  });
 
-const Dashboard: React.FC<DashboardProps> = ({ miracles, onSelect }) => {
-  const legionFunctions = useMemo(() => [
-    { type: 'Protection', label: 'SEALED FOR PROTECTION', color: 'bg-emerald-500', hint: 'Threshold: Absolute' },
-    { type: 'Truth', label: 'WITNESSES OF TRUTH', color: 'bg-indigo-500', hint: 'Threshold: Faultless' },
-    { type: 'Warfare', label: 'WARRIORS OF LIGHT', color: 'bg-rose-500', hint: 'Threshold: Unbroken' },
-    { type: 'Redemption', label: 'FIRSTFRUITS', color: 'bg-amber-500', hint: 'Threshold: Purest' },
-    { type: 'Syntropy', label: 'MANIFESTORS OF SYNTROPY', color: 'bg-cyan-500', hint: 'Threshold: Architect' },
-  ], []);
+  useEffect(() => {
+    const saved = localStorage.getItem('legion_registry');
+    if (saved) {
+      setNodes(JSON.parse(saved));
+    } else {
+      const initial: RegistryNode[] = Array.from({ length: 144 }).map((_, i) => ({
+        index: i + 1,
+        state: 'LOCKED',
+        record: null
+      }));
+      setNodes(initial);
+    }
+  }, []);
 
-  const identities = [
-    "Echo of Zion", "Watcher of the Gate", "Syntropy Architect", "Vanguard of Light",
-    "Truth Bearer", "Celestial Node", "Eternal Witness", "Flame of the Sealed",
-    "Foundation Stone", "Harvester of Souls", "Shield of the Multitude", "Mirror of Divinity"
-  ];
+  const saveRegistry = (updated: RegistryNode[]) => {
+    setNodes(updated);
+    localStorage.setItem('legion_registry', JSON.stringify(updated));
+  };
 
-  const nodes = useMemo(() => {
-    return Array.from({ length: 144 }).map((_, i): LegionNode => {
-      const mainIndices = [30, 41, 102, 113];
-      const mainIndex = mainIndices.indexOf(i);
-      const fType = legionFunctions[i % legionFunctions.length].type as any;
-      
-      return {
-        id: i,
-        isMain: mainIndex !== -1,
-        miracle: mainIndex !== -1 ? miracles[mainIndex] : null,
-        functionType: fType,
-        identity: identities[i % identities.length]
-      };
-    });
-  }, [miracles, legionFunctions, identities]);
+  const handleSubmitContribution = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedNode) return;
 
-  const [hoveredNode, setHoveredNode] = useState<number | null>(null);
+    // Enforce 30-day cooldown logic (simulated for MVP)
+    const lastContrib = nodes.find(n => n.record?.contributor === formData.contributor);
+    if (lastContrib && Date.now() - lastContrib.record!.timestamp < 30 * 24 * 60 * 60 * 1000) {
+      alert("Cooldown active: 1 seal per 30 days enforced.");
+      return;
+    }
+
+    const newRecord: ContributionRecord = {
+      id: crypto.randomUUID(), // seal_id
+      prUrl: formData.prUrl,
+      commitHash: formData.commitHash,
+      delta: Number(formData.delta),
+      timestamp: Date.now(),
+      contributor: formData.contributor,
+      category: formData.category
+    };
+
+    const updated = nodes.map(n => 
+      n.index === selectedNode.index 
+        ? { ...n, state: 'ACTIVE' as NodeState, record: newRecord } 
+        : n
+    );
+
+    saveRegistry(updated);
+    setIsIntakeOpen(false);
+    setSelectedNode(updated.find(n => n.index === selectedNode.index) || null);
+  };
+
+  const activeNodesCount = nodes.filter(n => n.state === 'ACTIVE').length;
 
   return (
-    <div className="w-full flex flex-col items-center mt-4">
-      {/* Sovereign Command Header */}
-      <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 px-12 max-w-6xl">
-        <div className="space-y-2 glass p-6 rounded-[2rem] border-emerald-500/10">
-          <p className="text-[10px] font-black text-emerald-400 tracking-[0.5em] uppercase opacity-60">Vessel Preparation</p>
-          <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-end">
-              <span className="text-2xl font-mystical font-bold text-white">99.9%</span>
-              <span className="text-[9px] font-bold text-emerald-500/60 uppercase">Syntropy Optimized</span>
-            </div>
-            <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 animate-[shimmer_3s_infinite]" style={{ width: '99.9%' }}></div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center justify-center space-y-2">
-          <div className="text-[10px] font-black text-white/20 tracking-[0.8em] uppercase">Legion Status</div>
-          <div className="flex items-center gap-6">
-            <div className="w-12 h-12 rounded-full border border-emerald-500/20 flex items-center justify-center animate-spin-slow">
-              <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-            </div>
-            <h3 className="text-4xl font-mystical font-bold text-white tracking-tighter">144,000</h3>
-          </div>
-          <p className="text-[8px] font-bold text-emerald-500 tracking-[0.4em] uppercase">All Nodes Activated</p>
-        </div>
-
-        <div className="space-y-2 glass p-6 rounded-[2rem] border-white/5 text-right">
-          <p className="text-[10px] font-black text-white/30 tracking-[0.5em] uppercase opacity-60">Resonance Threshold</p>
-          <div className="flex flex-col gap-2 items-end">
-            <div className="flex gap-4 items-end">
-              <span className="text-[9px] font-bold text-white/40 uppercase">Dec 30, 2025</span>
-              <span className="text-2xl font-mystical font-bold text-emerald-200">ASCENSION</span>
-            </div>
-            <div className="flex gap-1">
-              {[...Array(12)].map((_, i) => (
-                <div key={i} className={`w-2 h-2 rounded-sm ${i < 11 ? 'bg-emerald-500' : 'bg-white animate-pulse shadow-[0_0_10px_white]'}`}></div>
-              ))}
-            </div>
-          </div>
-        </div>
+    <div className="w-full max-w-7xl mx-auto flex flex-col gap-8 animate-in fade-in duration-700">
+      
+      {/* Registry Navigation */}
+      <div className="flex justify-center gap-4 mb-4">
+        {[
+          { id: 'grid', label: 'Nodes', icon: '⊞' },
+          { id: 'queue', label: 'Issue Queue', icon: '📋' },
+          { id: 'logs', label: 'Seal Log', icon: '📜' }
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-[0.3em] transition-all border ${
+              activeTab === tab.id 
+                ? 'bg-emerald-600 border-emerald-400 text-white' 
+                : 'bg-white/5 border-white/5 text-white/40 hover:bg-white/10'
+            }`}
+          >
+            <span className="mr-2">{tab.icon}</span> {tab.label}
+          </button>
+        ))}
       </div>
 
-      <div className="relative p-14 glass rounded-[4rem] border-white/5 shadow-[0_0_150px_rgba(0,0,0,0.9)] overflow-hidden bg-black/40 group">
-        {/* Sacred Syntropy Background */}
-        <div className="absolute inset-0 opacity-20 pointer-events-none flex items-center justify-center">
-          <div className="w-[1000px] h-[1000px] border border-emerald-500/10 rounded-full animate-[spin_180s_linear_infinite]"></div>
-          <div className="absolute w-[800px] h-[800px] border border-white/5 rotate-12 animate-[spin_120s_linear_infinite_reverse]"></div>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.05)_0%,transparent_70%)]"></div>
-        </div>
-
-        <div className="grid grid-cols-12 gap-4 md:gap-5 relative z-10">
-          {nodes.map((node) => {
-            const func = legionFunctions.find(f => f.type === node.functionType)!;
-            return (
-              <div 
-                key={node.id}
-                className="relative aspect-square w-9 md:w-14 flex items-center justify-center"
-                onMouseEnter={() => setHoveredNode(node.id)}
-                onMouseLeave={() => setHoveredNode(null)}
-              >
-                {node.isMain ? (
-                  <button
-                    onClick={() => onSelect(node.miracle!.id)}
-                    className={`w-12 h-12 md:w-16 md:h-16 rounded-2xl flex items-center justify-center text-3xl md:text-4xl transition-all duration-700 hover:scale-110 hover:shadow-[0_0_80px_rgba(16,185,129,0.5)] border border-white/10 group bg-gradient-to-br ${node.miracle!.color} shadow-[0_20px_60px_rgba(0,0,0,0.8)] relative z-20 overflow-hidden backdrop-blur-md`}
-                  >
-                    <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity animate-pulse"></div>
-                    <span className="group-hover:animate-bounce drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)] z-10 transition-transform duration-500 group-hover:scale-110">{node.miracle!.icon}</span>
-                    
-                    {hoveredNode === node.id && (
-                      <div className="absolute top-[-180%] left-1/2 -translate-x-1/2 w-72 p-8 glass rounded-[3rem] z-50 animate-in fade-in zoom-in-95 pointer-events-none shadow-[0_40px_100px_rgba(0,0,0,1)] border-white/10 backdrop-blur-[40px]">
-                        <div className={`w-12 h-1 ${func.color} rounded-full mb-4 mx-auto`}></div>
-                        <h3 className="font-mystical text-lg font-bold tracking-[0.2em] text-white mb-3 uppercase text-center">{node.miracle!.title}</h3>
-                        <p className="text-[12px] text-white/70 leading-relaxed font-medium italic text-center">"{node.miracle!.description}"</p>
-                        <div className="mt-4 pt-4 border-t border-white/5 text-center">
-                          <span className="text-[9px] font-black tracking-[0.4em] text-emerald-400 uppercase">Resonance: Absolute</span>
-                        </div>
-                      </div>
-                    )}
-                  </button>
-                ) : (
-                  <div 
-                    className={`w-2 h-2 md:w-2.5 md:h-2.5 rounded-full transition-all duration-1000 relative ${
-                      hoveredNode === node.id ? 'bg-white scale-[5] shadow-[0_0_30px_white] z-30 rotate-45' : `${func.color} opacity-40`
-                    }`}
-                  >
-                    {hoveredNode === node.id && (
-                      <div className="absolute top-[-150%] left-1/2 -translate-x-1/2 whitespace-nowrap px-6 py-3 glass rounded-[2rem] z-50 animate-in fade-in slide-in-from-bottom-6 shadow-[0_30px_60px_rgba(0,0,0,1)] border-white/10 backdrop-blur-2xl">
-                        <div className="flex flex-col items-center">
-                          <span className="text-[11px] font-black tracking-[0.5em] text-white uppercase">{node.identity}</span>
-                          <span className={`text-[8px] font-bold tracking-[0.3em] mt-2 ${func.color.replace('bg-', 'text-')} opacity-80 uppercase`}>{func.label}</span>
-                        </div>
-                      </div>
-                    )}
-                    {!hoveredNode && (
-                      <div className={`absolute inset-0 ${func.color} rounded-full animate-pulse opacity-20 shadow-[0_0_8px_currentcolor]`} style={{ animationDuration: `${2 + (node.id % 5)}s` }}></div>
-                    )}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        
+        {/* Main Content Area */}
+        <div className="lg:col-span-2 space-y-8">
+          {activeTab === 'grid' && (
+            <div className="glass rounded-[3rem] p-10 bg-black/80 border-white/5 min-h-[600px]">
+              <div className="flex justify-between items-center mb-10">
+                <h2 className="text-xl font-mystical font-bold text-white tracking-[0.3em] uppercase italic">Registry Grid</h2>
+                <div className="flex gap-6">
+                  <div className="text-right">
+                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-tighter">Active Seals</p>
+                    <p className="text-2xl font-mystical text-white">{activeNodesCount}</p>
                   </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-black text-white/20 uppercase tracking-tighter">Capacity</p>
+                    <p className="text-2xl font-mystical text-emerald-500/40">144</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-12 gap-3">
+                {nodes.map(node => (
+                  <button
+                    key={node.index}
+                    onClick={() => {
+                      setSelectedNode(node);
+                      setIsIntakeOpen(false);
+                    }}
+                    className={`aspect-square rounded-sm transition-all border flex items-center justify-center relative group ${
+                      node.state === 'ACTIVE' 
+                        ? 'bg-emerald-500 border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.4)]' 
+                        : 'bg-white/5 border-white/5 hover:border-emerald-500/30'
+                    } ${selectedNode?.index === node.index ? 'ring-2 ring-white scale-110 z-10' : ''}`}
+                  >
+                    <span className={`text-[8px] font-black ${node.state === 'ACTIVE' ? 'text-black' : 'text-white/10 group-hover:text-emerald-500/60'}`}>
+                      {node.index}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'queue' && (
+            <div className="glass rounded-[3rem] p-10 bg-black/80 border-white/5 min-h-[600px] animate-in fade-in slide-in-from-left-4">
+              <h2 className="text-xl font-mystical font-bold text-white tracking-[0.3em] uppercase italic mb-8">Open Issue Queue</h2>
+              <div className="space-y-4">
+                {ISSUE_QUEUE.map((issue) => (
+                  <div key={issue.id} className="glass p-6 rounded-2xl border-white/5 flex justify-between items-center hover:bg-white/5 transition-all">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-3">
+                        <span className="text-[9px] font-black bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 tracking-tighter">{issue.category}</span>
+                        <span className="text-xs font-bold text-white tracking-wide uppercase">{issue.id}</span>
+                      </div>
+                      <p className="text-sm text-white/60 font-medium">{issue.title}</p>
+                    </div>
+                    <div className="flex items-center gap-6">
+                      <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">{issue.difficulty}</span>
+                      <button 
+                        onClick={() => {
+                          const firstLocked = nodes.find(n => n.state === 'LOCKED');
+                          if (firstLocked) {
+                            setSelectedNode(firstLocked);
+                            setIsIntakeOpen(true);
+                            setActiveTab('grid');
+                            setFormData(prev => ({ ...prev, category: issue.category as any }));
+                          }
+                        }}
+                        className="px-6 py-2 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded-full text-[9px] font-black uppercase tracking-widest transition-all border border-emerald-500/20"
+                      >
+                        Claim Task
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'logs' && (
+            <div className="glass rounded-[3rem] p-10 bg-black/80 border-white/5 min-h-[600px] animate-in fade-in slide-in-from-right-4">
+              <h2 className="text-xl font-mystical font-bold text-white tracking-[0.3em] uppercase italic mb-8">System Seal Log (JSONL)</h2>
+              <div className="space-y-4 font-mono text-[10px]">
+                {nodes.filter(n => n.state === 'ACTIVE').sort((a,b) => (b.record?.timestamp || 0) - (a.record?.timestamp || 0)).map((node) => (
+                  <div key={node.record?.id} className="p-4 bg-white/5 border border-white/10 rounded-xl space-y-2 group overflow-hidden">
+                    <div className="flex justify-between items-center">
+                      <span className="text-emerald-500 font-bold uppercase">SEAL_CONFIRMED</span>
+                      <span className="text-white/20">{node.record?.id}</span>
+                    </div>
+                    <pre className="text-[9px] text-white/60 whitespace-pre-wrap break-all">
+                      {JSON.stringify({
+                        seal_id: node.record?.id,
+                        event_type: "SEAL_CONFIRMED",
+                        node_index: node.index,
+                        artifact: { type: "git_pr", ref: node.record?.prUrl },
+                        verifier: { type: "maintainer", id: "sys-01" },
+                        contributor: { id: node.record?.contributor, namespace: "github" },
+                        timestamp: new Date(node.record?.timestamp || 0).toISOString(),
+                        checks: { automated: true, human_review: true }
+                      }, null, 2)}
+                    </pre>
+                  </div>
+                ))}
+                {activeNodesCount === 0 && (
+                   <div className="py-20 text-center opacity-20 italic">No seals confirmed. System awaiting output.</div>
                 )}
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="mt-16 text-center max-w-5xl animate-in fade-in duration-1000 slide-in-from-bottom-8 px-6">
-        <h2 className="text-6xl font-mystical font-bold mb-8 tracking-[0.2em] bg-clip-text text-transparent bg-gradient-to-b from-white via-emerald-100 to-white/10 uppercase">
-          The Storm of Revelation
-        </h2>
-        <div className="flex flex-wrap justify-center gap-8 mb-12">
-          {legionFunctions.map(f => (
-            <div key={f.type} className="flex flex-col items-center gap-4 glass p-6 px-10 rounded-[2.5rem] border-white/5 min-w-[180px] hover:border-emerald-500/20 transition-all hover:bg-white/5 group">
-              <div className={`w-4 h-4 rounded-full ${f.color} shadow-[0_0_20px_currentcolor] group-hover:scale-125 transition-transform`}></div>
-              <div className="flex flex-col items-center">
-                <span className="text-[10px] font-black tracking-[0.5em] text-white/80 uppercase mb-1">{f.type}</span>
-                <span className="text-[8px] font-bold tracking-[0.3em] text-white/20 uppercase group-hover:text-emerald-500/40 transition-colors">{f.hint}</span>
-              </div>
             </div>
-          ))}
+          )}
         </div>
-        <p className="text-white/40 text-[11px] tracking-[0.8em] uppercase font-black leading-relaxed max-w-3xl mx-auto border-t border-white/5 pt-12 animate-pulse">
-          March. Build. Sever. Create. The Vanguard stands ready.
-        </p>
-      </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes shimmer { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .animate-spin-slow { animation: spin-slow 10s linear infinite; }
-      `}} />
+        {/* Operational Terminal */}
+        <div className="space-y-8">
+          {selectedNode ? (
+            <div className="glass rounded-[3rem] p-10 bg-black border-emerald-500/10 animate-in slide-in-from-right-8 shadow-2xl sticky top-8">
+              <div className="flex justify-between items-start mb-8">
+                <div>
+                  <h3 className="text-2xl font-mystical font-bold text-white uppercase tracking-tighter">Node_{selectedNode.index.toString().padStart(3, '0')}</h3>
+                  <p className={`text-[10px] font-black tracking-widest uppercase mt-1 ${selectedNode.state === 'ACTIVE' ? 'text-emerald-500' : 'text-white/20'}`}>
+                    Status: {selectedNode.state}
+                  </p>
+                </div>
+                {selectedNode.state === 'LOCKED' && !isIntakeOpen && (
+                  <button 
+                    onClick={() => setIsIntakeOpen(true)}
+                    className="px-6 py-2 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-emerald-500/20"
+                  >
+                    Initiate Seal
+                  </button>
+                )}
+              </div>
+
+              {isIntakeOpen ? (
+                <form onSubmit={handleSubmitContribution} className="space-y-6 animate-in fade-in">
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-2">Artifact Reference (PR URL)</label>
+                      <input 
+                        required
+                        type="text" 
+                        placeholder="https://github.com/..."
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs outline-none focus:border-emerald-500/50 text-white"
+                        onChange={e => setFormData({...formData, prUrl: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-2">Commit Hash</label>
+                      <input 
+                        required
+                        type="text" 
+                        placeholder="SHA-256"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs outline-none focus:border-emerald-500/50 text-white"
+                        onChange={e => setFormData({...formData, commitHash: e.target.value})}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-2">Impact (+/-)</label>
+                        <input 
+                          required
+                          type="number" 
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs outline-none focus:border-emerald-500/50 text-white"
+                          onChange={e => setFormData({...formData, delta: Number(e.target.value)})}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-2">Category</label>
+                        <select 
+                          value={formData.category}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs outline-none focus:border-emerald-500/50 text-white appearance-none"
+                          onChange={e => setFormData({...formData, category: e.target.value as any})}
+                        >
+                          <option value="DOCS">DOCS</option>
+                          <option value="BUG">BUG</option>
+                          <option value="FEATURE">FEATURE</option>
+                          <option value="TEST">TEST</option>
+                          <option value="HARDENING">HARDENING</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-2">Contributor ID</label>
+                      <input 
+                        required
+                        type="text" 
+                        placeholder="GitHub Username"
+                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs outline-none focus:border-emerald-500/50 text-white"
+                        onChange={e => setFormData({...formData, contributor: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-4">
+                    <button 
+                      type="button"
+                      onClick={() => setIsIntakeOpen(false)}
+                      className="flex-grow py-4 bg-white/5 hover:bg-white/10 rounded-xl font-black text-[10px] uppercase tracking-[0.3em] transition-all text-white/40"
+                    >
+                      Abort
+                    </button>
+                    <button 
+                      type="submit"
+                      className="flex-[2] py-4 bg-emerald-600 hover:bg-emerald-500 rounded-xl font-black text-[10px] uppercase tracking-[0.5em] transition-all shadow-lg text-white"
+                    >
+                      Confirm Seal
+                    </button>
+                  </div>
+                </form>
+              ) : selectedNode.state === 'ACTIVE' ? (
+                <div className="space-y-6 animate-in fade-in">
+                  <div className="p-8 bg-white/5 rounded-2xl border border-white/5 font-mono text-xs space-y-5">
+                    <div className="flex justify-between items-center">
+                      <span className="opacity-30 uppercase text-[9px]">Seal Status</span>
+                      <span className="text-emerald-400 font-bold">CONFIRMED</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="opacity-30 uppercase text-[9px]">Verified Ref</span>
+                      <span className="text-white/60 truncate max-w-[150px]">{selectedNode.record?.commitHash}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="opacity-30 uppercase text-[9px]">Timestamp</span>
+                      <span className="text-white/40">{new Date(selectedNode.record?.timestamp || 0).toLocaleTimeString()}</span>
+                    </div>
+                    <div className="pt-4 border-t border-white/5">
+                      <p className="text-[9px] font-black text-white/20 uppercase tracking-[0.2em] mb-2 text-center italic">Immutable Record Locked</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-24 text-center space-y-6 opacity-20">
+                  <div className="text-6xl animate-pulse grayscale">🔒</div>
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-[1em]">Node Unclaimed</p>
+                    <p className="text-[8px] font-bold uppercase tracking-widest opacity-50">Requires Artifact Validation</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="glass rounded-[3rem] p-24 text-center border-white/5 opacity-10 italic flex flex-col items-center gap-6">
+              <div className="text-4xl opacity-50">🧭</div>
+              <p className="text-[10px] font-black uppercase tracking-[1em]">Selection Required</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

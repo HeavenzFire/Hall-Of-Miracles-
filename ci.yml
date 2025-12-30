@@ -1,0 +1,81 @@
+
+name: Legion Registry CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-contribution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install Dependencies
+        run: npm install
+        
+      - name: Audit Systems
+        run: npm audit
+        
+      - name: Lint Protocol
+        run: npm run lint
+        
+      - name: Execute Tests
+        run: npm test
+        
+      - name: Verify Documentation Delta
+        run: |
+          # Ensure README or docs have been updated if this is a DOCS contribution
+          if [[ "${{ github.event.pull_request.title }}" == *"[DOCS]"* ]]; then
+            git diff --name-only HEAD^ HEAD | grep -E '\.md$' || exit 1
+          fi
+
+  seal-automation:
+    needs: validate-contribution
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate SealEvent Artifact
+        run: |
+          echo '{
+            "seal_id": "'$(uuidgen)'",
+            "event_type": "SEAL_CONFIRMED",
+            "node_index": "AUTO_ASSIGN",
+            "artifact": {
+              "type": "git_commit",
+              "ref": "'${{ github.sha }}'",
+              "repo": "'${{ github.repository }}'"
+            },
+            "verifier": {
+              "type": "ci",
+              "id": "github-actions-v4"
+            },
+            "contributor": {
+              "id": "'${{ github.actor }}'",
+              "namespace": "github"
+            },
+            "timestamp": "'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'",
+            "checks": {
+              "automated": true,
+              "human_review": false
+            }
+          }' > seal_event.json
+      - name: Upload Seal Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: seal-event
+          path: seal_event.json
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Secret Scanning
+        uses: gitleaks/gitleaks-action@v2

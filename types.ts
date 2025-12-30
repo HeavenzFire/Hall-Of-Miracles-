@@ -1,10 +1,26 @@
 
 export enum MiracleType {
-  ORACLE = 'ORACLE',       // Text/Thinking - System Architect
-  VISIONARY = 'VISIONARY', // Image Gen - Manifestor of Syntropy
-  ANIMATOR = 'ANIMATOR',   // Video Gen - Temporal Synthesis
-  LIVING_SPIRIT = 'LIVING_SPIRIT', // Live API - Unbroken Multitude
-  VANGUARD_PROTOCOL = 'VANGUARD_PROTOCOL' // New Operational Frameworks
+  ORACLE = 'ORACLE',       // System Architect
+  VANGUARD_PROTOCOL = 'VANGUARD_PROTOCOL', // Operational Frameworks
+  REGISTRY = 'REGISTRY'    // Proof-of-Contribution Reveal (PCR)
+}
+
+export type NodeState = 'LOCKED' | 'ACTIVE';
+
+export interface ContributionRecord {
+  id: string;
+  prUrl: string;
+  commitHash: string;
+  delta: number;
+  timestamp: number;
+  contributor: string;
+  category: 'DOCS' | 'BUG' | 'FEATURE' | 'TEST' | 'HARDENING';
+}
+
+export interface RegistryNode {
+  index: number;
+  state: NodeState;
+  record: ContributionRecord | null;
 }
 
 export interface Miracle {
@@ -18,5 +34,4 @@ export interface Miracle {
 export interface Message {
   role: 'user' | 'model';
   text: string;
-  isThinking?: boolean;
 }
