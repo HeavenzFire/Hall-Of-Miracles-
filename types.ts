@@ -1,47 +1,52 @@
 
-export enum MiracleType {
-  ORACLE = 'ORACLE',           // System Architect / Analysis
-  VANGUARD_PROTOCOL = 'VANGUARD_PROTOCOL', // Deployment Frameworks
-  REGISTRY = 'REGISTRY',        // Proof-of-Contribution / Artifact Tracking
-  TREASURY = 'TREASURY',        // Public-Goods Treasury (The Root Layer)
-  STABILITY_MONITOR = 'STABILITY_MONITOR', // Quantified Impact & Stability Metrics
-  AEGIS_GRID = 'AEGIS_GRID',     // Non-Lethal Grid & Real-time Neutralization
-  VISIONARY = 'VISIONARY',      // Shard Manifestation (Visuals)
-  SPIRIT = 'SPIRIT',             // Multi-modal Interface
-  GIFTING_PROTOCOL = 'GIFTING_PROTOCOL', // Global Forking & Distribution
-  EVOLUTION_INDEX = 'EVOLUTION_INDEX',   // EVI Monitoring & Acceleration
+export interface HDIMetrics {
+  zip: string;
+  name: string;
+  score: number;
+  childWelfare: number; // 2x weight
+  foodScarcity: number;
+  economicDesperation: number;
+  volatility: number;
+}
+
+export interface InterventionEvent {
+  id: string;
+  timestamp: string;
+  zip: string;
+  type: 'FOOD_STABILIZATION' | 'TRAUMA_CARE' | 'SAFE_PASSAGE';
+  receiptVerified: boolean;
+  redemptionVerified: boolean;
+  latency: number; // Days from report to verification
+  status: 'PENDING' | 'VERIFIED' | 'FAILED';
 }
 
 export interface EVIMetrics {
   dqs: number; // Decision Quality Score
-  ecl: number; // Error Correction Latency (days)
+  ecl: number; // Error Correction Latency
   rc: number;  // Reusability Coefficient
-  evi: number; // Composite Evolution Velocity Index
+  evi: number; // Evolution Velocity Index
 }
 
+export interface Message {
+  role: 'user' | 'model';
+  text: string;
+}
+
+// Added missing types for Registry and Dashboard functionality
 export type NodeState = 'LOCKED' | 'ACTIVE';
-export type ArtifactType = 'GIT_PR' | 'GIT_COMMIT' | 'BASE_TX' | 'CI_RUN';
 
-export interface TreasuryProposal {
-  id: number;
-  recipient: string;
-  amount: number;
-  executed: boolean;
-  title: string;
-  description: string;
-  projectedImpact?: string;
-}
+export type ArtifactType = 'BASE_TX' | 'GIT_PR' | 'GIT_COMMIT';
 
 export interface ContributionRecord {
   id: string;
   artifactType: ArtifactType;
   artifactRef: string;
-  commitHash?: string;
+  commitHash: string;
   delta: number;
   timestamp: number;
   contributor: string;
-  category: 'DOCS' | 'BUG' | 'FEATURE' | 'TEST' | 'HARDENING' | 'DEPLOYMENT' | 'TREASURY';
-  guardianId?: number;
+  category: 'DEPLOYMENT' | 'BUG' | 'HARDENING' | 'TEST' | 'FEATURE';
+  guardianId: number;
 }
 
 export interface RegistryNode {
@@ -50,15 +55,16 @@ export interface RegistryNode {
   record: ContributionRecord | null;
 }
 
-export interface Miracle {
-  id: MiracleType;
+// Added missing type for Treasury proposals
+export interface TreasuryProposal {
+  id: number;
+  recipient: string;
+  amount: number;
+  executed: boolean;
   title: string;
   description: string;
-  icon: string;
-  color: string;
+  projectedImpact: string;
 }
 
-export interface Message {
-  role: 'user' | 'model';
-  text: string;
-}
+// Added missing type for Stability Monitor phases
+export type StabilizationPhase = 'BASELINE' | 'PILOT' | 'STABILIZATION' | 'EMPOWERMENT';

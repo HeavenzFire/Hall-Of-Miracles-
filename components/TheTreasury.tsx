@@ -1,10 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { TreasuryProposal } from '../types';
+import { GoogleGenAI, Type } from '@google/genai';
 
 const TheTreasury: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [proposals, setProposals] = useState<TreasuryProposal[]>([]);
   const [isProposing, setIsProposing] = useState(false);
+  const [isAIProcessing, setIsAIProcessing] = useState(false);
+  const [quickInput, setQuickInput] = useState('');
+  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -13,7 +17,6 @@ const TheTreasury: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     asset: 'ETH' as 'ETH' | 'LEGION'
   });
 
-  const [governorAddress, setGovernorAddress] = useState('0x8453_LEGION_GOVERNOR_SEPOLIA_01');
   const [balances, setBalances] = useState({
     eth: 0.45,
     legion: 500000
@@ -32,6 +35,46 @@ const TheTreasury: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       }]);
     }
   }, []);
+
+  const handleQuickCommand = async () => {
+    if (!quickInput.trim()) return;
+    setIsAIProcessing(true);
+    
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: `Parse this proposal request into a JSON object: "${quickInput}". 
+        The object must have: title, description, recipient, amount (number), asset (ETH or LEGION).`,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING },
+              description: { type: Type.STRING },
+              recipient: { type: Type.STRING },
+              amount: { type: Type.NUMBER },
+              asset: { type: Type.STRING, enum: ['ETH', 'LEGION'] }
+            },
+            required: ['title', 'description', 'recipient', 'amount', 'asset']
+          },
+          systemInstruction: "You are the Treasury Oracle. Parse user natural language into structured proposal data."
+        }
+      });
+
+      const data = JSON.parse(response.text);
+      setFormData(data);
+      setIsProposing(true);
+      setQuickInput('');
+    } catch (err) {
+      console.error(err);
+      // Fallback: just open the empty form
+      setIsProposing(true);
+    } finally {
+      setIsAIProcessing(false);
+    }
+  };
 
   const handleSubmitProposal = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,174 +107,190 @@ const TheTreasury: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto animate-in fade-in duration-700">
-      <div className="text-center mb-16 space-y-4">
-        <h2 className="font-mystical text-7xl tracking-tighter text-slate-300 uppercase">Public-Goods Treasury</h2>
-        <p className="text-[11px] text-slate-500 font-black tracking-[1.2em] uppercase">Multi-Asset Resource Layer</p>
+    <div className="w-full max-w-7xl mx-auto flex flex-col gap-10 animate-in fade-in duration-700">
+      <div className="text-center space-y-4">
+        <h2 className="font-mystical text-7xl tracking-tighter text-slate-300 uppercase italic">Public-Goods Treasury</h2>
+        <p className="text-[11px] text-slate-500 font-black tracking-[1.2em] uppercase">Multi-Asset Resource Layer • Base L2</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Treasury Status */}
-        <div className="lg:col-span-1 space-y-6 sticky top-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start flex-grow">
+        {/* Treasury Sidebar */}
+        <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-8">
           <div className="glass rounded-[3rem] p-10 bg-black/60 border-white/5 space-y-8 shadow-2xl">
             <div className="space-y-6">
               <div className="text-center space-y-1">
                  <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em]">Vault ETH</p>
-                 <p className="text-4xl font-mystical text-white">{balances.eth.toFixed(2)} <span className="text-xs opacity-30">ETH</span></p>
+                 <p className="text-5xl font-mystical text-white">{balances.eth.toFixed(2)} <span className="text-xs opacity-30">ETH</span></p>
               </div>
               <div className="text-center space-y-1">
                  <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.4em]">Vault LEGION</p>
-                 <p className="text-4xl font-mystical text-purple-400">{balances.legion.toLocaleString()} <span className="text-xs opacity-30">LT</span></p>
+                 <p className="text-5xl font-mystical text-purple-400">{balances.legion.toLocaleString()} <span className="text-xs opacity-30">LT</span></p>
               </div>
             </div>
             
             <div className="w-full h-[1px] bg-white/5"></div>
             
-            <div className="space-y-4">
-               <div className="flex justify-between items-center text-xs">
-                 <span className="text-white/20 uppercase font-black">Governor</span>
-                 <span className="text-white/60 font-mono text-[9px]">{governorAddress.substring(0, 18)}...</span>
-               </div>
-               <div className="flex justify-between items-center text-xs">
-                 <span className="text-white/20 uppercase font-black">Proposals</span>
-                 <span className="text-white/60">{proposals.length} Managed</span>
-               </div>
-            </div>
-
             <button 
               onClick={() => setIsProposing(true)}
-              className="w-full py-6 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl font-black text-[10px] uppercase tracking-[0.5em] transition-all text-white"
+              className="w-full py-6 bg-emerald-600/10 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/20 rounded-2xl font-black text-[11px] uppercase tracking-[0.5em] transition-all shadow-xl"
             >
-              Propose Stability Grant
+              Draft Stability Grant
             </button>
-          </div>
 
-          <div className="glass rounded-[2rem] p-8 border-white/5 bg-black/40">
-            <h4 className="text-[9px] font-black text-white/40 uppercase tracking-[0.4em] mb-4">Registry Metadata</h4>
-            <div className="space-y-3">
-               <div className="flex justify-between text-[10px]">
-                  <span className="text-white/20 uppercase">Network</span>
-                  <span className="text-emerald-500 font-bold">Base Sepolia</span>
+            <div className="space-y-3 pt-4">
+               <div className="flex justify-between items-center text-[10px] font-bold">
+                 <span className="text-white/20 uppercase tracking-widest">Registry Sync</span>
+                 <span className="text-emerald-500">ACTIVE ✓</span>
                </div>
-               <div className="flex justify-between text-[10px]">
-                  <span className="text-white/20 uppercase">Governance</span>
-                  <span className="text-purple-400 font-bold italic">Hybrid Nexus</span>
+               <div className="flex justify-between items-center text-[10px] font-bold">
+                 <span className="text-white/20 uppercase tracking-widest">Pending</span>
+                 <span className="text-white/60">{proposals.filter(p => !p.executed).length} Proposals</span>
                </div>
             </div>
           </div>
         </div>
 
-        {/* Proposals List */}
-        <div className="lg:col-span-2 space-y-6">
+        {/* Main Content: Proposals & Command Bar */}
+        <div className="lg:col-span-8 space-y-6 flex flex-col min-h-[700px]">
           {isProposing ? (
-            <div className="glass rounded-[3rem] p-12 bg-black border-emerald-500/10 animate-in slide-in-from-right-8">
-              <h3 className="text-xl font-mystical font-bold text-white uppercase tracking-wider mb-8 italic">Draft Stability Proposal</h3>
-              <form onSubmit={handleSubmitProposal} className="space-y-6">
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-2">Proposal Title</label>
+            <div className="glass rounded-[3.5rem] p-12 bg-black border-emerald-500/10 animate-in slide-in-from-right-8 shadow-2xl">
+              <div className="flex justify-between items-center mb-10">
+                <h3 className="text-2xl font-mystical font-bold text-white uppercase tracking-wider italic">Execute Grant Proposal</h3>
+                <button onClick={() => setIsProposing(false)} className="text-white/20 hover:text-white/60 text-xs font-black uppercase tracking-widest">Abort</button>
+              </div>
+              
+              <form onSubmit={handleSubmitProposal} className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-2 col-span-2">
+                    <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] ml-2">Proposal Title</label>
                     <input 
                       required
                       type="text" 
+                      value={formData.title}
                       placeholder="e.g. Expand Aegis Grid to Sector 9"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-sm text-white outline-none focus:border-emerald-500/50"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm text-white outline-none focus:border-emerald-500/50"
                       onChange={e => setFormData({...formData, title: e.target.value})}
                     />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-2">Strategic Description</label>
+                  <div className="space-y-2 col-span-2">
+                    <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] ml-2">Operational Description</label>
                     <textarea 
                       required
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 text-sm text-white outline-none focus:border-emerald-500/50 min-h-[120px] resize-none"
+                      value={formData.description}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm text-white outline-none focus:border-emerald-500/50 min-h-[120px] resize-none"
                       placeholder="Define the harm-reduction impact..."
                       onChange={e => setFormData({...formData, description: e.target.value})}
                     />
                   </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-1 col-span-1">
-                      <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-2">Asset</label>
-                      <select 
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs outline-none focus:border-emerald-500/50 text-white"
-                        onChange={e => setFormData({...formData, asset: e.target.value as any})}
-                      >
-                        <option value="ETH">ETH</option>
-                        <option value="LEGION">LEGION</option>
-                      </select>
-                    </div>
-                    <div className="space-y-1 col-span-2">
-                      <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-2">Amount</label>
-                      <input 
-                        required
-                        type="number" 
-                        step="0.01"
-                        placeholder="0.00"
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs outline-none focus:border-emerald-500/50 text-white font-mono"
-                        onChange={e => setFormData({...formData, amount: Number(e.target.value)})}
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] ml-2">Asset Type</label>
+                    <select 
+                      value={formData.asset}
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm outline-none focus:border-emerald-500/50 text-white appearance-none"
+                      onChange={e => setFormData({...formData, asset: e.target.value as any})}
+                    >
+                      <option value="ETH">ETH</option>
+                      <option value="LEGION">LEGION (LT)</option>
+                    </select>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] ml-2">Recipient Address</label>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] ml-2">Grant Amount</label>
+                    <input 
+                      required
+                      type="number" 
+                      step="0.01"
+                      value={formData.amount}
+                      placeholder="0.00"
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm text-white outline-none focus:border-emerald-500/50 font-mono"
+                      onChange={e => setFormData({...formData, amount: Number(e.target.value)})}
+                    />
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <label className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] ml-2">Recipient Address (0x...)</label>
                     <input 
                       required
                       type="text" 
-                      placeholder="0x..."
-                      className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs outline-none focus:border-emerald-500/50 text-white font-mono"
+                      value={formData.recipient}
+                      placeholder="0x8453..."
+                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm text-white outline-none focus:border-emerald-500/50 font-mono"
                       onChange={e => setFormData({...formData, recipient: e.target.value})}
                     />
                   </div>
                 </div>
-                <div className="flex gap-4">
-                  <button type="button" onClick={() => setIsProposing(false)} className="flex-grow py-5 glass rounded-xl text-[10px] font-black uppercase text-white/40">Cancel</button>
-                  <button type="submit" className="flex-[2] py-5 bg-emerald-600 rounded-xl text-[10px] font-black uppercase text-white shadow-xl">Submit to Governor</button>
-                </div>
+                <button type="submit" className="w-full py-6 bg-emerald-600 hover:bg-emerald-500 text-white rounded-3xl font-black text-[12px] uppercase tracking-[0.8em] shadow-2xl transition-all active:scale-95">
+                  Submit to Governor
+                </button>
               </form>
             </div>
           ) : (
-            <div className="space-y-4">
-              {proposals.slice().reverse().map(p => (
-                <div key={p.id} className={`glass p-10 rounded-[2.5rem] border-white/5 transition-all group ${p.executed ? 'opacity-40 grayscale-[0.5]' : 'hover:border-emerald-500/20 shadow-2xl bg-black/40'}`}>
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-3">
-                        <span className="text-[8px] font-black bg-white/5 px-2 py-0.5 rounded uppercase text-white/40">GRANT_{p.id.toString().padStart(3, '0')}</span>
-                        <span className={`text-[8px] font-black px-2 py-0.5 rounded uppercase ${p.executed ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400 animate-pulse'}`}>
-                          {p.executed ? 'Executed' : 'Voting In Progress'}
-                        </span>
+            <>
+              <div className="flex-grow space-y-4 overflow-y-auto max-h-[600px] custom-scrollbar pr-2">
+                {proposals.slice().reverse().map(p => (
+                  <div key={p.id} className={`glass p-10 rounded-[2.5rem] border-white/5 transition-all group ${p.executed ? 'opacity-40 grayscale-[0.5]' : 'hover:border-emerald-500/20 shadow-2xl bg-black/40'}`}>
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-3">
+                          <span className="text-[8px] font-black bg-white/5 px-2 py-0.5 rounded uppercase text-white/40">GRANT_{p.id.toString().padStart(3, '0')}</span>
+                          <span className={`text-[8px] font-black px-2 py-0.5 rounded uppercase ${p.executed ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400 animate-pulse'}`}>
+                            {p.executed ? 'ARCHIVED' : 'VOTING'}
+                          </span>
+                        </div>
+                        <h4 className="text-2xl font-mystical font-bold text-white uppercase tracking-widest italic">{p.title}</h4>
                       </div>
-                      <h4 className="text-xl font-bold text-white uppercase tracking-widest italic">{p.title}</h4>
+                      <div className="text-right">
+                        <p className={`text-3xl font-mystical ${p.description.includes('[LEGION]') ? 'text-purple-400' : 'text-white'}`}>
+                          {p.amount.toLocaleString()} <span className="text-xs opacity-40">{p.description.includes('[LEGION]') ? 'LT' : 'ETH'}</span>
+                        </p>
+                        <p className="text-[9px] font-mono text-white/30 truncate max-w-[120px] ml-auto">{p.recipient}</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`text-2xl font-mystical ${p.description.includes('[LEGION]') ? 'text-purple-400' : 'text-white'}`}>
-                        {p.amount.toLocaleString()} <span className="text-xs opacity-40">{p.description.includes('[LEGION]') ? 'LT' : 'ETH'}</span>
-                      </p>
-                      <p className="text-[9px] font-mono text-white/30 truncate max-w-[120px] ml-auto">{p.recipient}</p>
+                    
+                    <p className="text-sm text-white/60 leading-relaxed mb-8 font-light italic">"{p.description.replace(/\[.*?\] /, '')}"</p>
+                    
+                    <div className="flex justify-between items-center border-t border-white/5 pt-6">
+                       <div className="text-[9px] font-black text-emerald-500/60 uppercase tracking-widest italic">
+                          {p.projectedImpact}
+                       </div>
+                       {!p.executed && (
+                         <button 
+                           onClick={() => executeProposal(p.id)}
+                           className="px-8 py-3 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white rounded-full text-[9px] font-black uppercase tracking-widest transition-all border border-purple-500/20"
+                         >
+                           Execute Consensus
+                         </button>
+                       )}
                     </div>
                   </div>
-                  
-                  <p className="text-sm text-white/60 leading-relaxed mb-6 font-light italic">"{p.description.replace(/\[.*?\] /, '')}"</p>
-                  
-                  <div className="flex justify-between items-center">
-                     <div className="text-[9px] font-black text-emerald-500/60 uppercase tracking-widest italic">
-                        {p.projectedImpact}
-                     </div>
-                     {!p.executed && (
-                       <button 
-                         onClick={() => executeProposal(p.id)}
-                         className="px-8 py-3 bg-purple-600/20 hover:bg-purple-600 text-purple-400 hover:text-white rounded-full text-[9px] font-black uppercase tracking-widest transition-all border border-purple-500/20"
-                       >
-                         Execute Consensus
-                       </button>
-                     )}
-                  </div>
+                ))}
+              </div>
+
+              {/* Command Bar: Similar to TheOracle */}
+              <div className="p-8 glass rounded-[3rem] bg-black/40 border border-white/10 mt-auto">
+                <div className="flex gap-6">
+                  <input 
+                    type="text" 
+                    value={quickInput}
+                    onChange={(e) => setQuickInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleQuickCommand()}
+                    placeholder="Command a proposal... (e.g. 'Draft a grant for 0.05 ETH to 0x123... for food bank expansion')"
+                    className="flex-grow bg-white/5 border border-white/10 rounded-2xl px-8 py-5 text-sm text-white outline-none focus:border-emerald-500/50 shadow-inner italic"
+                    disabled={isAIProcessing}
+                  />
+                  <button 
+                    onClick={handleQuickCommand}
+                    disabled={isAIProcessing || !quickInput.trim()}
+                    className="px-12 py-5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-20 text-white rounded-2xl font-black text-[11px] uppercase tracking-[0.5em] transition-all shadow-2xl active:scale-95"
+                  >
+                    {isAIProcessing ? 'PARSING...' : 'DRAFT'}
+                  </button>
                 </div>
-              ))}
-            </div>
+              </div>
+            </>
           )}
         </div>
       </div>
       
-      <div className="mt-12 text-center">
+      <div className="mt-8 text-center pb-10">
         <button 
           onClick={onBack}
           className="text-white/20 hover:text-white/60 text-[10px] font-black tracking-[0.8em] uppercase transition-all"
@@ -239,6 +298,13 @@ const TheTreasury: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           Return to Nexus Command
         </button>
       </div>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+      `}} />
     </div>
   );
 };
