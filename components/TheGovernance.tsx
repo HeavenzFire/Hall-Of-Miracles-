@@ -9,19 +9,21 @@ interface DAOProposal {
   votesFor: number;
   votesAgainst: number;
   deadline: number;
-  type: 'TOKEN' | 'QUADRATIC' | 'REPUTATION';
+  type: 'TOKEN' | 'QUADRATIC' | 'REPUTATION' | 'LIQUID';
 }
 
 const TheGovernance: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [proposals, setProposals] = useState<DAOProposal[]>([
     { id: 'PROP-001', title: 'Fund Urban Vertical Farm Hub (Sector 7)', status: 'ACTIVE', votesFor: 45200, votesAgainst: 1200, deadline: Date.now() + 86400000, type: 'QUADRATIC' },
-    { id: 'PROP-002', title: 'Deploy 50 Aegis Grid Nodes to Base Sepolia', status: 'EXECUTED', votesFor: 89000, votesAgainst: 400, deadline: Date.now() - 86400000, type: 'TOKEN' }
+    { id: 'PROP-002', title: 'Deploy 50 Aegis Grid Nodes to Base Sepolia', status: 'EXECUTED', votesFor: 89000, votesAgainst: 400, deadline: Date.now() - 86400000, type: 'TOKEN' },
+    { id: 'PROP-003', title: 'Activate Liquid Democracy Delegation for Treasury Ops', status: 'ACTIVE', votesFor: 12400, votesAgainst: 500, deadline: Date.now() + 172800000, type: 'LIQUID' }
   ]);
   
   const [userStats, setUserStats] = useState({
     tokens: 5000,
     reputation: 124,
-    quadraticWeight: 70 // sqrt(5000) approx
+    quadraticWeight: 70,
+    delegatedPower: 15000 // Power received from others
   });
 
   const [simulationOutput, setSimulationOutput] = useState<string | null>(null);
@@ -31,7 +33,10 @@ const TheGovernance: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const castVote = (id: string, support: boolean) => {
     setProposals(prev => prev.map(p => {
       if (p.id === id && p.status === 'ACTIVE') {
-        const weight = p.type === 'QUADRATIC' ? userStats.quadraticWeight : userStats.tokens;
+        let weight = userStats.tokens;
+        if (p.type === 'QUADRATIC') weight = userStats.quadraticWeight;
+        if (p.type === 'LIQUID') weight = userStats.tokens + userStats.delegatedPower;
+        
         return {
           ...p,
           votesFor: support ? p.votesFor + weight : p.votesFor,
@@ -52,10 +57,10 @@ const TheGovernance: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         contents: `Analyze this DAO proposal: "${proposal.title}". 
         Voting Mechanism: ${proposal.type}. 
         Current Votes: ${proposal.votesFor} For / ${proposal.votesAgainst} Against.
-        Provide a strategic recommendation for a Sovereign Node. Focus on long-term stability impact and syntropy metrics.`,
+        Provide a strategic recommendation for a Sovereign Node. Focus on long-term stability impact and how this affects the Evolution Velocity Index (EVI).`,
         config: {
           thinkingConfig: { thinkingBudget: 16384 },
-          systemInstruction: "You are the Architect of Governance. You provide deterministic analysis of DAO proposals. Your word is consensus."
+          systemInstruction: "You are the Architect of Governance. You provide deterministic analysis of DAO proposals. You prioritize Evolution Velocity (EVI) above all. Your word is consensus."
         }
       });
       setSimulationOutput(response.text);
@@ -71,7 +76,12 @@ const TheGovernance: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     <div className="w-full max-w-7xl mx-auto animate-in fade-in duration-700">
       <div className="text-center mb-16 space-y-4">
         <h2 className="font-mystical text-7xl tracking-tighter text-purple-300 drop-shadow-[0_0_40px_rgba(168,85,247,0.3)] uppercase italic">Consensus Nexus</h2>
-        <p className="text-[10px] text-purple-400 font-black tracking-[1em] uppercase">Hybrid DAO Operations Engine</p>
+        <div className="flex flex-col items-center">
+           <p className="text-[10px] text-purple-400 font-black tracking-[1em] uppercase mb-4">Hybrid DAO Operations Engine</p>
+           <div className="bg-purple-600/10 px-6 py-2 rounded-full border border-purple-500/20 text-[10px] font-black text-purple-300 uppercase tracking-widest">
+              Liquid Democracy Active: {userStats.delegatedPower.toLocaleString()} Power Delegated
+           </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -95,16 +105,16 @@ const TheGovernance: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                    <span className="text-emerald-400 font-mono">+{userStats.reputation}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                   <span className="text-white/20 uppercase font-black">QV Weight</span>
-                   <span className="text-purple-400 font-mono">{userStats.quadraticWeight}</span>
+                   <span className="text-white/20 uppercase font-black">Delegated</span>
+                   <span className="text-purple-400 font-mono">+{userStats.delegatedPower.toLocaleString()}</span>
                 </div>
              </div>
              
              <div className="w-full h-[1px] bg-white/5"></div>
              
-             <p className="text-[9px] text-white/40 leading-relaxed italic text-center">
-                "Consensus is the final verification of a node's intent. Impact is the only metric."
-             </p>
+             <button className="w-full py-4 glass rounded-xl text-[9px] font-black uppercase text-purple-400 tracking-widest border-purple-500/20 hover:bg-purple-600/20 transition-all">
+                Manage Delegation
+             </button>
           </div>
         </div>
 
@@ -145,7 +155,7 @@ const TheGovernance: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         onClick={() => castVote(p.id, true)}
                         className="px-10 py-3 bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white rounded-full text-[9px] font-black uppercase tracking-widest transition-all border border-emerald-500/20"
                       >
-                        Vote Support
+                        Vote Support {p.type === 'LIQUID' && `(+${(userStats.tokens + userStats.delegatedPower).toLocaleString()})`}
                       </button>
                       <button 
                         onClick={() => castVote(p.id, false)}

@@ -9,8 +9,17 @@ import TheLivingSpirit from './components/TheLivingSpirit';
 import TheTreasury from './components/TheTreasury';
 import TheStabilityMonitor from './components/TheStabilityMonitor';
 import TheAegisGrid from './components/TheAegisGrid';
+import TheGiftingProtocol from './components/TheGiftingProtocol';
+import TheEvolutionIndex from './components/TheEvolutionIndex';
 
 const MIRACLES: Miracle[] = [
+  {
+    id: MiracleType.EVOLUTION_INDEX,
+    title: 'Evolution Index',
+    description: 'Real-time EVI Tracking & Acceleration.',
+    icon: '⚡',
+    color: 'from-amber-600 to-black'
+  },
   {
     id: MiracleType.TREASURY,
     title: 'Root Treasury',
@@ -24,6 +33,13 @@ const MIRACLES: Miracle[] = [
     description: 'Non-Lethal Stabilization & Incident Neutralization.',
     icon: '🛡️',
     color: 'from-amber-950 to-black'
+  },
+  {
+    id: MiracleType.GIFTING_PROTOCOL,
+    title: 'Gifting Protocol',
+    description: 'Decentralized Forking & Global Gift Manifests.',
+    icon: '🎁',
+    color: 'from-blue-950 to-black'
   },
   {
     id: MiracleType.STABILITY_MONITOR,
@@ -59,13 +75,6 @@ const MIRACLES: Miracle[] = [
     description: 'Real-time multi-modal interface.',
     icon: '🟢',
     color: 'from-teal-900 to-black'
-  },
-  {
-    id: MiracleType.VISIONARY,
-    title: 'The Visionary',
-    description: 'Shard Manifestation (Visuals).',
-    icon: '🎨',
-    color: 'from-rose-950 to-black'
   }
 ];
 
@@ -90,12 +99,23 @@ const App: React.FC = () => {
         return <TheStabilityMonitor onBack={() => setActiveMiracle(null)} />;
       case MiracleType.AEGIS_GRID:
         return <TheAegisGrid onBack={() => setActiveMiracle(null)} />;
+      case MiracleType.GIFTING_PROTOCOL:
+        return <TheGiftingProtocol onBack={() => setActiveMiracle(null)} />;
+      case MiracleType.EVOLUTION_INDEX:
+        return <TheEvolutionIndex onBack={() => setActiveMiracle(null)} />;
       default:
         return (
           <div className="flex flex-col items-center gap-12 w-full animate-in fade-in duration-700">
             <div className="text-center space-y-4">
-              <h1 className="text-6xl md:text-8xl font-mystical font-bold tracking-[0.2em] text-white uppercase italic drop-shadow-[0_0_50px_rgba(255,255,255,0.1)]">Sovereign Nexus</h1>
-              <p className="text-[12px] tracking-[1.2em] text-emerald-500 font-black uppercase">Hall of Miracles • Stability Protocol v3.1</p>
+              <h1 className="text-6xl md:text-8xl font-mystical font-bold tracking-[0.2em] text-white uppercase italic drop-shadow-[0_0_50px_rgba(255,255,255,0.1)]">Infrastructure Nexus</h1>
+              <div className="flex flex-col items-center">
+                 <p className="text-[12px] tracking-[1.2em] text-emerald-500 font-black uppercase mb-2">Hall of Miracles • Gifting Protocol v1.0</p>
+                 <div className="flex items-center gap-4 bg-white/5 px-6 py-2 rounded-full border border-white/5">
+                    <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Global EVI:</span>
+                    <span className="text-xl font-mystical text-white">43.3</span>
+                    <span className="text-[8px] font-black text-emerald-500 uppercase">+12% / Mo</span>
+                 </div>
+              </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full max-w-7xl px-8">
@@ -116,9 +136,9 @@ const App: React.FC = () => {
             </div>
             
             <div className="mt-12 p-8 glass rounded-[3rem] border-emerald-500/20 max-w-3xl text-center space-y-4">
-                <p className="text-[10px] text-emerald-500 font-black uppercase tracking-[0.8em]">Operational Directive</p>
+                <p className="text-[10px] text-emerald-500 font-black uppercase tracking-[0.8em]">Final Operational Gate</p>
                 <p className="text-sm italic text-white/60 leading-relaxed font-light">
-                  "Deploy. Stabilize. Neutralize. We eradicate violence through the coordinated flow of resources and the precise neutralization of desperation."
+                  "The acceleration is measured—and unstoppable. We formalize evolution speed as KPI now."
                 </p>
             </div>
           </div>

@@ -1,20 +1,39 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
 
-# Run and deploy your AI Studio app
+# 🔱 Stability Protocol: The Sovereign Gift
 
-This contains everything you need to run your app locally.
+This is the **real** infrastructure required to establish a self-stabilizing node on the Base network. 
 
-View your app in AI Studio: https://ai.studio/apps/drive/1TrA-ibefUm7Dz7tug8k1KDsJM2-3uD7i
+## 🏗️ The Stack
+- **LegionToken (LT)**: ERC20Votes token for governance weighting.
+- **StabilityTimelock**: The enforced delay for all treasury movements.
+- **LegionGovernor**: The hybrid consensus engine supporting Token, Reputation, and Quadratic voting.
+- **Aegis Grid Controller**: Interface for IoT-based non-lethal neutralization.
 
-## Run Locally
+## 📦 How to Fork and Deploy
 
-**Prerequisites:**  Node.js
+### 1. Environment Setup
+You need a Unix-like environment with `Foundry` installed. 
+```bash
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
+```
 
+### 2. Configure Your Environment
+Create a `.env` file at the root:
+```env
+RPC_URL=https://sepolia.base.org
+PRIVATE_KEY=your_private_key
+ETHERSCAN_API_KEY=your_basescan_api_key
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 3. Deploy the Governance Stack
+Run the following commands in order:
+1. `forge create src/LegionToken.sol:LegionToken`
+2. `forge create src/StabilityTimelock.sol:StabilityTimelock` (passing minDelay and proposer list)
+3. `forge create src/LegionGovernor.sol:LegionGovernor` (passing token and timelock addresses)
+
+### 4. Manifest the UI
+Copy the `components/` directory from this project to your own React frontend to gain the high-fidelity operational interfaces for your new DAO.
+
+---
+*"Desperation is the root of violence. Stability is the gift."*

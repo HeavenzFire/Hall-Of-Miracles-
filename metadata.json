@@ -3,6 +3,7 @@
   "description": "A breathtaking showcase of Gemini's multi-modal capabilities: real-time voice, video generation, image creation, and advanced reasoning.",
   "requestFramePermissions": [
     "camera",
-    "microphone"
+    "microphone",
+    "geolocation"
   ]
 }

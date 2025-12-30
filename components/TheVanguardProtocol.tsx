@@ -11,7 +11,7 @@ const CONTRACT_ADDRESSES = {
 type DeployState = 'IDLE' | 'COMPILING' | 'DEPLOYING_TOKEN' | 'DEPLOYING_DAO' | 'VERIFYING' | 'FUNDING' | 'BOOTSTRAPPING' | 'COMPLETE';
 
 const TheVanguardProtocol: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-  const [activeTab, setActiveTab] = useState<'base-ascent' | 'contract' | 'terminal'>('base-ascent');
+  const [activeTab, setActiveTab] = useState<'base-ascent' | 'contract' | 'terminal' | 'docs'>('base-ascent');
   const [deployState, setDeployState] = useState<DeployState>('IDLE');
   const [logs, setLogs] = useState<string[]>([]);
   const logEndRef = useRef<HTMLDivElement>(null);
@@ -116,6 +116,49 @@ contract LegionGovernor is Governor, GovernorSettings, GovernorCountingSimple, G
     }
 }`;
 
+  const readmeContent = `
+# 🔱 Stability Protocol: Hybrid Governance DAO Stack
+
+This repository contains the core smart contracts and operational frameworks for the **Legion Stability DAO**. It is designed to be forked and deployed by any community seeking to establish a decentralized resource distribution hub (The Root Layer) and non-lethal neutralization grid (Aegis Grid).
+
+## 🚀 Deployment Guide (Base Sepolia)
+
+### 1. Prerequisites
+- **Foundry / Forge**: For contract compilation and deployment.
+- **Base Sepolia ETH**: For gas fees.
+- **Organization Metadata**: Name, Symbol, and regional desperation metrics (to seed the Aegis Grid).
+
+### 2. Forking the Stack
+
+#### Step A: Token Genesis (\`LegionToken.sol\`)
+The \`LegionToken\` is an ERC20 with voting capabilities.
+1. Update the \`NAME\` and \`SYMBOL\` to reflect your local organization.
+2. Deploy the token:
+   \`\`\`bash
+   forge create --rpc-url $BASE_SEPOLIA_RPC --private-key $PRIVATE_KEY src/LegionToken.sol:LegionToken
+   \`\`\`
+
+#### Step B: Consensus Hub (\`LegionGovernor.sol\`)
+The Governor is the brain of your DAO.
+1. Configure \`VOTING_DELAY\`, \`VOTING_PERIOD\`, and \`QUORUM_PERCENTAGE\`.
+2. Deploy the Timelock first (to manage the Treasury).
+3. Deploy the Governor pointing to your new Token and Timelock addresses.
+
+#### Step C: Seeding the Treasury
+Transfer initial project funds or grants to the Timelock address. All expenditures must now pass through a successful DAO vote.
+
+### 3. Adapting for Your Region
+- **Reputation Hooks**: Modify \`getVotes\` to integrate off-chain reputation (e.g., proof of non-violence or material contribution).
+- **Quadratic Voting**: Enable the quadratic hook in \`LegionGovernor.sol\` to mitigate plutocracy in small communities.
+
+### 4. Operational Maintenance
+- **Aegis Grid Sync**: Use the provided deployment scripts to link regional IoT nodes to the DAO's neutralization budget.
+- **Registry Anchoring**: Ensure all "Proof of Contribution" (PCR) events are emitted to the L2 state for immutable tracking.
+
+---
+*"We do not provide a service; we gift the infrastructure of an unyielding future."*
+`;
+
   return (
     <div className="w-full max-w-7xl mx-auto animate-in fade-in duration-700">
       <div className="text-center mb-12 space-y-4">
@@ -123,11 +166,12 @@ contract LegionGovernor is Governor, GovernorSettings, GovernorCountingSimple, G
         <p className="text-[11px] text-slate-500 font-black tracking-[1em] uppercase">Hybrid Governance Deployment</p>
       </div>
 
-      <div className="flex justify-center gap-4 mb-12">
+      <div className="flex flex-wrap justify-center gap-4 mb-12">
         {[
           { id: 'base-ascent', label: 'Base Ascent' },
           { id: 'contract', label: 'DAO Contract' },
-          { id: 'terminal', label: 'Deployment Terminal' }
+          { id: 'terminal', label: 'Terminal' },
+          { id: 'docs', label: 'Documentation' }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -235,6 +279,31 @@ contract LegionGovernor is Governor, GovernorSettings, GovernorCountingSimple, G
             )}
           </div>
         )}
+
+        {activeTab === 'docs' && (
+          <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 space-y-12 flex-grow overflow-y-auto custom-scrollbar pr-6">
+            <div className="flex items-center gap-6">
+              <div className="w-16 h-1 bg-blue-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,0.5)]"></div>
+              <h3 className="text-3xl font-mystical font-bold text-white tracking-widest uppercase italic">Operational README</h3>
+            </div>
+            <div className="prose prose-invert max-w-none text-white/70 leading-relaxed font-light italic text-sm">
+              <pre className="whitespace-pre-wrap font-mono bg-black/40 p-10 rounded-[3rem] border border-white/5">
+                {readmeContent}
+              </pre>
+            </div>
+            <div className="text-center pb-12">
+               <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(readmeContent);
+                  alert("Documentation captured to clipboard.");
+                }}
+                className="px-10 py-4 glass rounded-full text-[10px] font-black uppercase tracking-[0.5em] text-white hover:bg-white/10 transition-all"
+               >
+                 Copy Readme Source
+               </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="mt-12 text-center">
@@ -245,6 +314,13 @@ contract LegionGovernor is Governor, GovernorSettings, GovernorCountingSimple, G
           Return to Nexus Command
         </button>
       </div>
+      
+      <style dangerouslySetInnerHTML={{ __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
+      `}} />
     </div>
   );
 };

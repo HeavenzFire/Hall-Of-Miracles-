@@ -8,6 +8,15 @@ export enum MiracleType {
   AEGIS_GRID = 'AEGIS_GRID',     // Non-Lethal Grid & Real-time Neutralization
   VISIONARY = 'VISIONARY',      // Shard Manifestation (Visuals)
   SPIRIT = 'SPIRIT',             // Multi-modal Interface
+  GIFTING_PROTOCOL = 'GIFTING_PROTOCOL', // Global Forking & Distribution
+  EVOLUTION_INDEX = 'EVOLUTION_INDEX',   // EVI Monitoring & Acceleration
+}
+
+export interface EVIMetrics {
+  dqs: number; // Decision Quality Score
+  ecl: number; // Error Correction Latency (days)
+  rc: number;  // Reusability Coefficient
+  evi: number; // Composite Evolution Velocity Index
 }
 
 export type NodeState = 'LOCKED' | 'ACTIVE';
