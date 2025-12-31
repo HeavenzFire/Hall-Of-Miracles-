@@ -13,9 +13,10 @@ export interface InterventionEvent {
   id: string;
   timestamp: string;
   zip: string;
-  type: 'FOOD_STABILIZATION' | 'TRAUMA_CARE' | 'SAFE_PASSAGE';
+  type: 'FOOD_STABILIZATION' | 'TRAUMA_CARE' | 'SAFE_PASSAGE' | 'DIAGNOSTIC' | 'NON_LETHAL_STABILIZATION';
   receiptVerified: boolean;
   redemptionVerified: boolean;
+  replicated: boolean; // Tracking replication rate
   latency: number; // Days from report to verification
   status: 'PENDING' | 'VERIFIED' | 'FAILED';
 }
@@ -23,7 +24,7 @@ export interface InterventionEvent {
 export interface EVIMetrics {
   dqs: number; // Decision Quality Score
   ecl: number; // Error Correction Latency
-  rc: number;  // Reusability Coefficient
+  rc: number;  // Reusability Coefficient (Replication)
   evi: number; // Evolution Velocity Index
 }
 
@@ -40,6 +41,19 @@ export interface Miracle {
   color: string;
   system: 'TREASURY' | 'GRID' | 'COVENANT' | 'VANGUARD';
   description: string;
+}
+
+export interface HumanLayerState {
+  fiscalSponsor: 'NULL' | 'IDENTIFIED' | 'VETTED' | 'CONTRACTED';
+  mediator: 'NULL' | 'IDENTIFIED' | 'VETTED' | 'CONTRACTED';
+  auditor: 'NULL' | 'IDENTIFIED' | 'VETTED' | 'CONTRACTED';
+}
+
+export interface PilotGate {
+  id: string;
+  label: string;
+  description: string;
+  status: 'LOCKED' | 'PENDING' | 'CLEARED';
 }
 
 // Added missing types for Registry and Dashboard functionality

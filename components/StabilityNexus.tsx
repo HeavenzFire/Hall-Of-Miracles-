@@ -12,6 +12,7 @@ import TheAegisGrid from './TheAegisGrid';
 import TheCovenant from './TheCovenant';
 import TheVanguardProtocol from './TheVanguardProtocol';
 import TheUnexpectedBlueprint from './TheUnexpectedBlueprint';
+import OperationGlassHorizon from './OperationGlassHorizon';
 
 const StabilityNexus: React.FC = () => {
   const [zip, setZip] = useState("60621");
@@ -19,7 +20,7 @@ const StabilityNexus: React.FC = () => {
   const [events, setEvents] = useState<InterventionEvent[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [oracleReport, setOracleReport] = useState<string | null>(null);
-  const [view, setView] = useState<'HALL' | 'MAP' | 'AUDIT' | 'TREASURY' | 'DOCS' | 'RUBRIC' | 'GRID' | 'COVENANT' | 'VANGUARD' | 'BLUEPRINT'>('HALL');
+  const [view, setView] = useState<'HALL' | 'MAP' | 'AUDIT' | 'TREASURY' | 'DOCS' | 'RUBRIC' | 'GRID' | 'COVENANT' | 'VANGUARD' | 'BLUEPRINT' | 'HORIZON'>('HALL');
   const [audit, setAudit] = useState<VerificationAudit | null>(null);
 
   const [metrics, setMetrics] = useState<EVIMetrics>({
@@ -38,14 +39,11 @@ const StabilityNexus: React.FC = () => {
     setAudit(newAudit);
 
     if (events.length > 0) {
-      const avgLatency = events.reduce((acc, curr) => acc + curr.latency, 0) / events.length;
-      const rc = events.filter(e => e.redemptionVerified).length + 5; 
-
       setMetrics({
         dqs: newAudit.confidenceScore,
-        ecl: Number(avgLatency.toFixed(1)),
-        rc: rc,
-        evi: Number((newAudit.confidenceScore * (1 / Math.max(avgLatency, 0.1)) * rc).toFixed(0))
+        ecl: newAudit.averageLatency,
+        rc: newAudit.replicationRate,
+        evi: Number((newAudit.confidenceScore * (1 / Math.max(newAudit.averageLatency, 0.1)) * (newAudit.replicationRate / 10)).toFixed(0))
       });
     }
   }, [events]);
@@ -87,6 +85,7 @@ const StabilityNexus: React.FC = () => {
         type: 'FOOD_STABILIZATION',
         receiptVerified: true,
         redemptionVerified: Math.random() > 0.15,
+        replicated: Math.random() > 0.8,
         latency: Math.random() * 2 + 0.5,
         status: 'PENDING'
       };
@@ -108,8 +107,9 @@ const StabilityNexus: React.FC = () => {
   };
 
   // View Routing
-  if (view === 'HALL') return <TheHallOfMiracles onNavigate={navigateFromHall} onEnterMonitor={() => setView('MAP')} onEnterBlueprint={() => setView('BLUEPRINT')} />;
+  if (view === 'HALL') return <TheHallOfMiracles onNavigate={navigateFromHall} onEnterMonitor={() => setView('MAP')} onEnterBlueprint={() => setView('BLUEPRINT')} onEnterHorizon={() => setView('HORIZON')} />;
   if (view === 'BLUEPRINT') return <TheUnexpectedBlueprint onBack={() => setView('HALL')} />;
+  if (view === 'HORIZON') return <OperationGlassHorizon onBack={() => setView('HALL')} />;
   if (view === 'TREASURY') return <TheTreasury onBack={() => setView('HALL')} />;
   if (view === 'DOCS') return <ProtocolOverview onBack={() => setView('HALL')} />;
   if (view === 'RUBRIC') return <SiteSelectionRubric onBack={() => setView('HALL')} />;
@@ -132,6 +132,12 @@ const StabilityNexus: React.FC = () => {
           Witness Hall
         </button>
         <button 
+          onClick={() => setView('HORIZON')}
+          className="px-8 md:px-10 py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] transition-all bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.1)]"
+        >
+          Glass Horizon
+        </button>
+        <button 
           onClick={() => setView('BLUEPRINT')}
           className="px-8 md:px-10 py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] transition-all bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20"
         >
@@ -148,18 +154,6 @@ const StabilityNexus: React.FC = () => {
           className={`px-8 md:px-10 py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] transition-all border ${isAudit ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300' : 'bg-white/5 border-white/5 text-white/20'}`}
         >
           Audit
-        </button>
-        <button 
-          onClick={() => setView('TREASURY')}
-          className="px-8 md:px-10 py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] transition-all border bg-white/5 border-white/5 text-white/20 hover:bg-white/10"
-        >
-          Treasury
-        </button>
-        <button 
-          onClick={() => setView('DOCS')}
-          className="px-8 md:px-10 py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] transition-all border bg-white/5 border-white/5 text-white/20 hover:bg-white/10"
-        >
-          Brief
         </button>
       </div>
 

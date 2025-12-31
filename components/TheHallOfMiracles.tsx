@@ -46,9 +46,10 @@ interface TheHallOfMiraclesProps {
   onNavigate: (system: Miracle['system']) => void;
   onEnterMonitor: () => void;
   onEnterBlueprint: () => void;
+  onEnterHorizon: () => void;
 }
 
-const TheHallOfMiracles: React.FC<TheHallOfMiraclesProps> = ({ onNavigate, onEnterMonitor, onEnterBlueprint }) => {
+const TheHallOfMiracles: React.FC<TheHallOfMiraclesProps> = ({ onNavigate, onEnterMonitor, onEnterBlueprint, onEnterHorizon }) => {
   const [selectedMiracle, setSelectedMiracle] = useState<Miracle | null>(null);
   const [ethicalNarration, setEthicalNarration] = useState<string | null>(null);
   const [isNarrating, setIsNarrating] = useState(false);
@@ -218,12 +219,23 @@ const TheHallOfMiracles: React.FC<TheHallOfMiraclesProps> = ({ onNavigate, onEnt
          </button>
 
          <button 
+          onClick={onEnterHorizon}
+          className="group relative px-20 py-10 glass rounded-[3rem] bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20 transition-all duration-700 active:scale-95 shadow-[0_0_100px_rgba(245,158,11,0.1)]"
+         >
+            <div className="space-y-2 relative z-10">
+              <h4 className="text-[12px] font-black text-amber-400 uppercase tracking-[1em] italic">Glass Horizon</h4>
+              <p className="text-xs text-white/30 font-light italic">Ground the human layer</p>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]"></div>
+         </button>
+
+         <button 
           onClick={onEnterBlueprint}
           className="group relative px-20 py-10 glass rounded-[3rem] bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20 transition-all duration-700 active:scale-95 shadow-[0_0_100px_rgba(244,63,94,0.1)]"
          >
             <div className="space-y-2 relative z-10">
               <h4 className="text-[12px] font-black text-rose-400 uppercase tracking-[1em] italic">Unexpected Blueprint</h4>
-              <p className="text-xs text-white/30 font-light italic">Execute the sovereign infrastructure</p>
+              <p className="text-xs text-white/30 font-light italic">Execute sovereign infra</p>
             </div>
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]"></div>
          </button>
