@@ -1,12 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { GoogleGenAI } from '@google/genai';
-import { HDIMetrics, InterventionEvent, EVIMetrics } from '../types';
+import { HDIMetrics, InterventionEvent, EVIMetrics, Miracle } from '../types';
 import { calculateHDI, getZipList, HDI_THRESHOLD, getCommunityName } from '../utils/hdi_engine';
 import { performAudit, VerificationAudit } from '../utils/verification_engine';
 import TheTreasury from './TheTreasury';
 import ProtocolOverview from './ProtocolOverview';
 import SiteSelectionRubric from './SiteSelectionRubric';
+import TheHallOfMiracles from './TheHallOfMiracles';
+import TheAegisGrid from './TheAegisGrid';
+import TheCovenant from './TheCovenant';
+import TheVanguardProtocol from './TheVanguardProtocol';
+import TheUnexpectedBlueprint from './TheUnexpectedBlueprint';
 
 const StabilityNexus: React.FC = () => {
   const [zip, setZip] = useState("60621");
@@ -14,7 +19,7 @@ const StabilityNexus: React.FC = () => {
   const [events, setEvents] = useState<InterventionEvent[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [oracleReport, setOracleReport] = useState<string | null>(null);
-  const [view, setView] = useState<'MAP' | 'AUDIT' | 'TREASURY' | 'DOCS' | 'RUBRIC'>('MAP');
+  const [view, setView] = useState<'HALL' | 'MAP' | 'AUDIT' | 'TREASURY' | 'DOCS' | 'RUBRIC' | 'GRID' | 'COVENANT' | 'VANGUARD' | 'BLUEPRINT'>('HALL');
   const [audit, setAudit] = useState<VerificationAudit | null>(null);
 
   const [metrics, setMetrics] = useState<EVIMetrics>({
@@ -95,22 +100,43 @@ const StabilityNexus: React.FC = () => {
     }
   };
 
-  // Capture view flags
+  const navigateFromHall = (system: Miracle['system']) => {
+    if (system === 'TREASURY') setView('TREASURY');
+    if (system === 'GRID') setView('GRID');
+    if (system === 'COVENANT') setView('COVENANT');
+    if (system === 'VANGUARD') setView('VANGUARD');
+  };
+
+  // View Routing
+  if (view === 'HALL') return <TheHallOfMiracles onNavigate={navigateFromHall} onEnterMonitor={() => setView('MAP')} onEnterBlueprint={() => setView('BLUEPRINT')} />;
+  if (view === 'BLUEPRINT') return <TheUnexpectedBlueprint onBack={() => setView('HALL')} />;
+  if (view === 'TREASURY') return <TheTreasury onBack={() => setView('HALL')} />;
+  if (view === 'DOCS') return <ProtocolOverview onBack={() => setView('HALL')} />;
+  if (view === 'RUBRIC') return <SiteSelectionRubric onBack={() => setView('HALL')} />;
+  if (view === 'GRID') return <TheAegisGrid onBack={() => setView('HALL')} />;
+  if (view === 'COVENANT') return <TheCovenant onBack={() => setView('HALL')} />;
+  if (view === 'VANGUARD') return <TheVanguardProtocol onBack={() => setView('HALL')} />;
+
   const isMap = view === 'MAP';
   const isAudit = view === 'AUDIT';
-  const isTreasury = view === 'TREASURY';
-  const isDocs = view === 'DOCS';
-  const isRubric = view === 'RUBRIC';
-
-  if (isTreasury) return <TheTreasury onBack={() => setView('MAP')} />;
-  if (isDocs) return <ProtocolOverview onBack={() => setView('MAP')} />;
-  if (isRubric) return <SiteSelectionRubric onBack={() => setView('MAP')} />;
 
   return (
     <div className="w-full max-w-7xl mx-auto space-y-12 animate-in fade-in duration-1000">
       
       {/* Nexus Controls */}
       <div className="flex flex-wrap justify-center gap-4 md:gap-6">
+        <button 
+          onClick={() => setView('HALL')}
+          className="px-8 md:px-10 py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] transition-all bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20"
+        >
+          Witness Hall
+        </button>
+        <button 
+          onClick={() => setView('BLUEPRINT')}
+          className="px-8 md:px-10 py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] transition-all bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20"
+        >
+          Blueprint
+        </button>
         <button 
           onClick={() => setView('MAP')}
           className={`px-8 md:px-10 py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] transition-all border ${isMap ? 'bg-rose-500/20 border-rose-500/40 text-rose-300' : 'bg-white/5 border-white/5 text-white/20'}`}
@@ -125,19 +151,13 @@ const StabilityNexus: React.FC = () => {
         </button>
         <button 
           onClick={() => setView('TREASURY')}
-          className={`px-8 md:px-10 py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] transition-all border ${isTreasury ? 'bg-purple-500/20 border-purple-500/40 text-purple-300' : 'bg-white/5 border-white/5 text-white/20'}`}
+          className="px-8 md:px-10 py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] transition-all border bg-white/5 border-white/5 text-white/20 hover:bg-white/10"
         >
           Treasury
         </button>
         <button 
-          onClick={() => setView('RUBRIC')}
-          className={`px-8 md:px-10 py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] transition-all border ${isRubric ? 'bg-amber-500/20 border-amber-500/40 text-amber-300' : 'bg-white/5 border-white/5 text-white/20'}`}
-        >
-          Rubric
-        </button>
-        <button 
           onClick={() => setView('DOCS')}
-          className={`px-8 md:px-10 py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] transition-all border ${isDocs ? 'bg-white/20 border-white/40 text-white shadow-[0_0_20px_rgba(255,255,255,0.1)]' : 'bg-white/5 border-white/5 text-white/20'}`}
+          className="px-8 md:px-10 py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] transition-all border bg-white/5 border-white/5 text-white/20 hover:bg-white/10"
         >
           Brief
         </button>

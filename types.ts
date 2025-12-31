@@ -32,6 +32,16 @@ export interface Message {
   text: string;
 }
 
+export interface Miracle {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: string;
+  color: string;
+  system: 'TREASURY' | 'GRID' | 'COVENANT' | 'VANGUARD';
+  description: string;
+}
+
 // Added missing types for Registry and Dashboard functionality
 export type NodeState = 'LOCKED' | 'ACTIVE';
 

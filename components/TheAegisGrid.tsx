@@ -56,9 +56,9 @@ const TheAegisGrid: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         contents: `Generate a high-intensity technical log entry for a non-lethal neutralization event in ${activeSector.name}. 
         Territory status: ${activeSector.status}. 
         Trigger: Stability Score deviation detected below ${activeSector.baseline} threshold. 
-        Focus on redundant mesh engagement and automated harm reduction. Keep it under 40 words.`,
+        Focus on redundant mesh engagement and automated harm reduction. Emphasize de-escalation over surveillance. Keep it under 40 words.`,
         config: {
-          systemInstruction: "You are the Aegis Grid Controller. You oversee a non-lethal stabilization mesh for the Legion. Your output is measured by absolute efficiency and measurable harm reduction across multiple sectors."
+          systemInstruction: "You are the Aegis Grid Controller. You oversee a non-lethal stabilization mesh for the Legion. Your output is measured by absolute efficiency and refusal to surveil. You prioritize de-escalation through immediate resource flow."
         }
       });
 
@@ -84,8 +84,8 @@ const TheAegisGrid: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   return (
     <div className="w-full max-w-7xl mx-auto animate-in fade-in duration-700">
       <div className="text-center mb-16 space-y-4">
-        <h2 className="font-mystical text-7xl tracking-tighter text-amber-300 uppercase italic">Aegis Grid</h2>
-        <p className="text-[11px] text-amber-500/60 font-black tracking-[1.2em] uppercase">Multi-Sector Stabilization Mesh • Scale: 10k Nodes</p>
+        <h2 className="font-mystical text-7xl tracking-tighter text-amber-300 uppercase italic">Anti-Surveillance Grid</h2>
+        <p className="text-[11px] text-amber-500/60 font-black tracking-[1.2em] uppercase">Non-Lethal Stabilization • De-escalation Invariant</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
@@ -137,10 +137,10 @@ const TheAegisGrid: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
           
           <div className="glass rounded-[2rem] p-6 bg-emerald-500/5 border-emerald-500/20">
-             <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-2">Network Expansion</p>
+             <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest mb-2">Neutralization Ethics</p>
              <div className="flex justify-between items-end">
-                <span className="text-[12px] font-bold text-white uppercase italic">+3 Sectors Active</span>
-                <span className="text-[10px] text-emerald-400 font-mono">+30% Stability Projection</span>
+                <span className="text-[12px] font-bold text-white uppercase italic">Zero Biometrics Collected</span>
+                <span className="text-[10px] text-emerald-400 font-mono">Status: Verified</span>
              </div>
           </div>
         </div>
@@ -186,7 +186,7 @@ const TheAegisGrid: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           
           <div className="absolute bottom-8 left-12 right-12 flex justify-between items-center opacity-30">
              <span className="text-[8px] font-mono tracking-widest uppercase">Grid Latency: 4ms</span>
-             <span className="text-[8px] font-mono tracking-widest uppercase">Encryption: AES-256-GCM</span>
+             <span className="text-[8px] font-mono tracking-widest uppercase">Anti-Tracking: Active</span>
           </div>
         </div>
 
@@ -194,14 +194,14 @@ const TheAegisGrid: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div className="lg:col-span-3">
            <div className="glass rounded-[3rem] p-10 bg-black/80 border-white/5 shadow-2xl h-[650px] flex flex-col">
               <div className="flex justify-between items-center mb-8">
-                 <h3 className="text-xs font-mystical font-bold text-white uppercase tracking-widest italic">Grid Telemetry</h3>
-                 <span className="text-[8px] font-black text-amber-500/40 uppercase tracking-[0.4em]">Real-Time Fix</span>
+                 <h3 className="text-xs font-mystical font-bold text-white uppercase tracking-widest italic">De-escalation Log</h3>
+                 <span className="text-[8px] font-black text-amber-500/40 uppercase tracking-[0.4em]">Privacy-First</span>
               </div>
               <div className="flex-grow overflow-y-auto custom-scrollbar pr-4 space-y-4">
                  {incidentLogs.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center opacity-10 text-center space-y-4">
-                       <span className="text-4xl grayscale opacity-30">📡</span>
-                       <p className="text-[9px] font-black uppercase tracking-[0.5em]">Scanning New Sectors</p>
+                       <span className="text-4xl grayscale opacity-30">🛡️</span>
+                       <p className="text-[9px] font-black uppercase tracking-[0.5em]">Monitoring for Instability</p>
                     </div>
                  ) : (
                     incidentLogs.map((log, i) => (
@@ -224,7 +224,7 @@ const TheAegisGrid: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           onClick={onBack}
           className="text-white/20 hover:text-white/60 text-[10px] font-black tracking-[0.8em] uppercase transition-all"
         >
-          Return to Nexus Command
+          Return to Hall of Miracles
         </button>
       </div>
 
